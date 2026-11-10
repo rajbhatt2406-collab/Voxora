@@ -5,15 +5,14 @@ import Link from 'next/link';
 import {
   UploadCloud,
   BookOpen,
-  CalendarDays,
   Clock,
   Sparkles,
   ArrowRight,
   Trash2,
   Play,
-  Layers,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  RefreshCw
 } from 'lucide-react';
 import { api } from '@/services/api';
 import { Lecture } from '@/types';
@@ -23,22 +22,41 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchLectures = async () => {
+  useEffect(() => {
+    let ignore = false;
+    api.getLectures()
+      .then((data) => {
+        if (!ignore) {
+          setLectures(data);
+          setError(null);
+          setLoading(false);
+        }
+      })
+      .catch((err: unknown) => {
+        if (!ignore) {
+          const msg = err instanceof Error ? err.message : 'Failed to load dashboard data';
+          setError(msg);
+          setLoading(false);
+        }
+      });
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  const refetchLectures = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
       const data = await api.getLectures();
       setLectures(data);
       setError(null);
-    } catch (err: any) {
-      setError(err.message || 'Failed to load dashboard data');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to load dashboard data';
+      setError(msg);
     } finally {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    fetchLectures();
-  }, []);
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -47,8 +65,9 @@ export default function DashboardPage() {
     try {
       await api.deleteLecture(id);
       setLectures((prev) => prev.filter((l) => l.id !== id));
-    } catch (err: any) {
-      alert(err.message || 'Failed to delete lecture');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to delete lecture';
+      alert(msg);
     }
   };
 
@@ -64,7 +83,7 @@ export default function DashboardPage() {
       {/* Welcome Banner */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 sm:p-8 rounded-2xl border border-slate-200/80 shadow-sm">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
             Welcome back to Voxora
           </h1>
           <p className="mt-1 text-sm text-slate-500">
@@ -73,7 +92,7 @@ export default function DashboardPage() {
         </div>
         <Link
           href="/upload"
-          className="inline-flex items-center px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm transition-colors"
+          className="inline-flex items-center px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm transition-all hover:shadow"
         >
           <UploadCloud className="w-4 h-4 mr-2" />
           Add Lecture
@@ -90,7 +109,7 @@ export default function DashboardPage() {
             </div>
           </div>
           <p className="mt-3 text-3xl font-extrabold text-slate-900">{totalLectures}</p>
-          <p className="mt-1 text-xs text-slate-500">{completedCount} processed & ready</p>
+          <p className="mt-1 text-xs text-slate-500">{completedCount} processed &amp; ready</p>
         </div>
 
         <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
@@ -147,10 +166,11 @@ export default function DashboardPage() {
             <p className="text-xs text-slate-500">Access transcripts, study notes, quizzes, and RAG chats</p>
           </div>
           <button
-            onClick={fetchLectures}
-            className="text-xs text-indigo-600 hover:text-indigo-800 font-semibold"
+            onClick={refetchLectures}
+            className="inline-flex items-center text-xs text-indigo-600 hover:text-indigo-800 font-semibold gap-1.5"
           >
-            Refresh
+            <RefreshCw className="w-3.5 h-3.5" />
+            <span>Refresh</span>
           </button>
         </div>
 
@@ -162,8 +182,8 @@ export default function DashboardPage() {
         ) : error ? (
           <div className="p-8 text-center text-rose-500 text-sm flex flex-col items-center">
             <AlertCircle className="w-8 h-8 mb-2" />
-            <p>{error}</p>
-            <p className="text-xs text-slate-400 mt-1">Make sure the backend server is running on port 8000.</p>
+            <p className="font-semibold">{error}</p>
+            <p className="text-xs text-slate-400 mt-1">Make sure the backend server is running on the configured API URL.</p>
           </div>
         ) : lectures.length === 0 ? (
           <div className="p-16 text-center">
@@ -245,4 +265,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-

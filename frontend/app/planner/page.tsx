@@ -1,20 +1,14 @@
 'use client';
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, Suspense, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import {
   CalendarDays,
   CheckCircle2,
-  Clock,
-  Sparkles,
-  BookOpen,
-  CheckSquare,
-  ArrowRight,
-  TrendingUp,
-  AlertCircle
+  Sparkles
 } from 'lucide-react';
 import { api } from '@/services/api';
-import { Lecture, LearningPlan, LearningSession } from '@/types';
+import { Lecture, LearningPlan } from '@/types';
 
 function PlannerContent() {
   const searchParams = useSearchParams();
@@ -22,7 +16,6 @@ function PlannerContent() {
 
   const [lectures, setLectures] = useState<Lecture[]>([]);
   const [selectedLectureId, setSelectedLectureId] = useState<string>(initialLectureId || '');
-  const [plans, setPlans] = useState<LearningPlan[]>([]);
   const [activePlan, setActivePlan] = useState<LearningPlan | null>(null);
 
   // Settings for new plan
@@ -31,33 +24,55 @@ function PlannerContent() {
 
   // Load lectures
   useEffect(() => {
-    api.getLectures().then((res) => {
-      setLectures(res);
-      if (res.length > 0 && !selectedLectureId) {
-        setSelectedLectureId(res[0].id);
-      }
-    }).catch(console.error);
-  }, []);
+    let ignore = false;
+    api.getLectures()
+      .then((res) => {
+        if (!ignore) {
+          setLectures(res);
+          if (res.length > 0 && !selectedLectureId) {
+            setSelectedLectureId(res[0].id);
+          }
+        }
+      })
+      .catch((err: unknown) => {
+        console.error('Failed to load lectures:', err);
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, [selectedLectureId]);
 
   // Load plans for selected lecture
-  const loadPlans = async (lecId: string) => {
+  const loadPlans = useCallback(async (lecId: string) => {
     try {
       const p = await api.getLearningPlans(lecId);
-      setPlans(p);
       if (p.length > 0) {
         setActivePlan(p[0]);
       } else {
         setActivePlan(null);
       }
-    } catch (e) {
-      console.error(e);
+    } catch (e: unknown) {
+      console.error('Failed to load learning plans:', e);
     }
-  };
+  }, []);
 
   useEffect(() => {
+    let ignore = false;
     if (selectedLectureId) {
-      loadPlans(selectedLectureId);
+      api.getLearningPlans(selectedLectureId)
+        .then((p) => {
+          if (!ignore) {
+            setActivePlan(p.length > 0 ? p[0] : null);
+          }
+        })
+        .catch((e: unknown) => {
+          console.error(e);
+        });
     }
+    return () => {
+      ignore = true;
+    };
   }, [selectedLectureId]);
 
   const handleCreatePlan = async () => {
@@ -65,10 +80,10 @@ function PlannerContent() {
     try {
       setCreating(true);
       const newPlan = await api.createLearningPlan(selectedLectureId, targetDailyHours);
-      setPlans((prev) => [newPlan, ...prev]);
       setActivePlan(newPlan);
-    } catch (e: any) {
-      alert(e.message || 'Failed to create plan');
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Failed to create plan';
+      alert(msg);
     } finally {
       setCreating(false);
     }
@@ -83,8 +98,9 @@ function PlannerContent() {
         );
         setActivePlan({ ...activePlan, sessions: updatedSessions });
       }
-    } catch (e: any) {
-      alert(e.message || 'Failed to toggle session');
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Failed to toggle session';
+      alert(msg);
     }
   };
 
@@ -98,7 +114,7 @@ function PlannerContent() {
       {/* Title */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 flex items-center">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 flex items-center tracking-tight">
             <CalendarDays className="w-7 h-7 text-indigo-600 mr-2.5" />
             Long Lecture Daily Study Planner
           </h1>
@@ -111,8 +127,12 @@ function PlannerContent() {
         <div className="w-full sm:w-72">
           <select
             value={selectedLectureId}
-            onChange={(e) => setSelectedLectureId(e.target.value)}
-            className="w-full text-xs font-semibold p-2.5 rounded-xl border border-slate-200 bg-white text-slate-800"
+            onChange={(e) => {
+              setSelectedLectureId(e.target.value);
+              loadPlans(e.target.value);
+            }}
+            aria-label="Select lecture for study planning"
+            className="w-full text-xs font-semibold p-2.5 rounded-xl border border-slate-200 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
           >
             {lectures.map((l) => (
               <option key={l.id} value={l.id}>
@@ -175,8 +195,10 @@ function PlannerContent() {
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                       <div className="flex items-start space-x-4">
                         <button
+                          type="button"
                           onClick={() => handleToggleSession(session.id)}
-                          className={`w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors mt-0.5 ${
+                          aria-label={`Toggle session ${session.day_number}`}
+                          className={`w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors mt-0.5 cursor-pointer ${
                             session.is_completed
                               ? 'bg-emerald-600 text-white'
                               : 'border-2 border-slate-300 text-transparent hover:border-indigo-600'
@@ -201,15 +223,16 @@ function PlannerContent() {
                           >
                             {session.title}
                           </h4>
-                          <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-2xl">
+                          <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-2xl leading-relaxed">
                             {session.description}
                           </p>
                         </div>
                       </div>
 
                       <button
+                        type="button"
                         onClick={() => handleToggleSession(session.id)}
-                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors whitespace-nowrap ${
+                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors whitespace-nowrap cursor-pointer ${
                           session.is_completed
                             ? 'bg-emerald-100 text-emerald-800'
                             : 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
@@ -257,6 +280,7 @@ function PlannerContent() {
               step="0.5"
               value={targetDailyHours}
               onChange={(e) => setTargetDailyHours(Number(e.target.value))}
+              aria-label="Target daily study duration in hours"
               className="w-full accent-indigo-600"
             />
             <div className="flex justify-between text-[10px] text-slate-400 mt-1">
@@ -269,7 +293,7 @@ function PlannerContent() {
           <button
             onClick={handleCreatePlan}
             disabled={creating || !selectedLectureId}
-            className="w-full py-3.5 rounded-xl font-bold text-sm text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 shadow-md transition-colors flex items-center justify-center"
+            className="w-full py-3.5 rounded-xl font-bold text-sm text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 shadow-md transition-all hover:shadow-lg flex items-center justify-center"
           >
             {creating ? (
               <>
@@ -296,4 +320,3 @@ export default function PlannerPage() {
     </Suspense>
   );
 }
-

@@ -35,7 +35,7 @@ export interface Note {
   note_type: 'detailed' | 'short' | 'topic_wise';
   title: string;
   content: string;
-  structured_data?: any;
+  structured_data?: Record<string, unknown>;
   handwritten_pdf_url?: string;
   created_at: string;
   updated_at: string;
@@ -104,7 +104,7 @@ export interface LearningSession {
   end_time: number;
   is_completed: boolean;
   session_notes?: string;
-  session_quiz?: any[];
+  session_quiz?: QuizQuestion[];
   completed_at?: string;
 }
 
@@ -139,7 +139,18 @@ export interface JobStatus {
   status: 'queued' | 'in_progress' | 'completed' | 'failed';
   progress: number;
   message?: string;
-  result_data?: any;
+  result_data?: Record<string, unknown>;
   error?: string;
 }
 
+export interface HandwrittenPdfOptions {
+  text?: string;
+  font_style?: string;
+  font_size?: number;
+  ink_color?: string;
+  paper_style?: string;
+  line_spacing?: number;
+  margin?: number;
+  page_background?: string;
+  [key: string]: unknown;
+}

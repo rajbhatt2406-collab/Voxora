@@ -1,36 +1,146 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Voxora — Frontend Application
 
-## Getting Started
+Modern AI-powered lecture learning workspace built with **Next.js 16**, **React 19**, **TypeScript**, and **Tailwind CSS v4**.
 
-First, run the development server:
+---
+
+## 🌟 Overview
+
+The Voxora frontend provides an intuitive, responsive workspace for students and researchers to turn lecture videos and audio recordings into structured academic knowledge:
+
+- **Interactive Lecture Workspace:** Tabbed workspace featuring lecture overview, timestamped transcripts, multi-language translation, detailed academic notes, short revision notes, summaries, Q&As, interactive 4-choice quizzes with explanations, and a grounded RAG AI tutor.
+- **Handwritten Notes Studio:** Interactive editor and real-time canvas preview for generating realistic ruled, grid, or plain handwritten-style PDF study sheets with customizable ink colors, typography, margins, and paper textures.
+- **Daily Study Planner:** Breaks down dense 8–10 hour marathon lectures into manageable daily milestones with progress tracking and checkpoint quizzes.
+- **Multilingual Support:** Transcribe and translate lecture transcripts into English, Hindi, Hinglish, Spanish, French, German, and regional Indian languages.
+- **Universal Ingestion:** Supports YouTube video links as well as direct audio/video uploads (MP4, MKV, MP3, WAV, etc.) with drag-and-drop.
+
+---
+
+## 🛠️ Technology Stack
+
+- **Framework:** [Next.js 16](https://nextjs.org/) (App Router with Turbopack)
+- **UI Library:** [React 19](https://react.dev/)
+- **Styling:** [Tailwind CSS v4](https://tailwindcss.com/)
+- **Icons:** [Lucide React](https://lucide.dev/)
+- **Type Safety:** TypeScript 5 (Strict Mode)
+- **Utilities:** `canvas-confetti`, `jspdf`, `clsx`, `tailwind-merge`
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- **Node.js:** v20.x or higher
+- **npm:** v10.x or higher (or pnpm / yarn)
+- **Backend:** A running [Voxora FastAPI backend](../backend/) (default port: `8000`)
+
+### 1. Installation
+
+```bash
+cd frontend
+npm install
+```
+
+### 2. Environment Configuration
+
+Copy the example environment file and configure the backend endpoint:
+
+```bash
+cp .env.example .env.local
+```
+
+In `.env.local`:
+
+```env
+# URL pointing to the FastAPI backend API prefix
+NEXT_PUBLIC_API_URL=http://localhost:8000/api
+```
+
+> **Note:** `NEXT_PUBLIC_API_URL` is exposed to the browser. Never store sensitive API secrets (like OpenAI, OpenRouter, or Gnani tokens) in frontend environment variables. Those are securely handled by the FastAPI backend.
+
+### 3. Development Server
+
+Start the local development server with Turbopack:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🧪 Testing & Validation
 
-## Learn More
+Run the following checks to ensure code quality before submitting contributions:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+# Run ESLint (enforces React 19 rules and strict types)
+npm run lint
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# Validate TypeScript type check without emitting files
+npx tsc --noEmit
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# Test optimized production build
+npm run build
+```
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 📁 Frontend Directory Structure
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```text
+frontend/
+├── app/                        # Next.js App Router
+│   ├── layout.tsx              # Root layout with responsive Navbar and Footer
+│   ├── page.tsx                # Landing page (hero, features, workflow)
+│   ├── globals.css             # Tailwind CSS v4 directives and color variables
+│   ├── dashboard/page.tsx      # Overview metrics & lecture inventory
+│   ├── upload/page.tsx         # YouTube ingestion & media upload interface
+│   ├── handwritten/page.tsx    # Handwritten PDF notes generator & preview
+│   ├── planner/page.tsx        # Multi-day study roadmap planner
+│   ├── assistant/page.tsx      # Global RAG AI assistant chat
+│   ├── settings/page.tsx       # User preferences & platform integrations
+│   └── lectures/[id]/page.tsx  # Dynamic lecture workspace coordinator
+├── components/                 # Reusable UI & layout components
+│   ├── Navbar.tsx              # Responsive navigation with mobile menu drawer
+│   ├── Footer.tsx              # Platform footer
+│   └── lectures/               # Modular lecture workspace tabs
+│       ├── LectureOverviewTab.tsx
+│       ├── LectureTranscriptTab.tsx
+│       ├── LectureNotesTab.tsx
+│       ├── LectureSummaryTab.tsx
+│       ├── LectureQuestionsTab.tsx
+│       ├── LectureQuizTab.tsx
+│       └── LectureAssistantTab.tsx
+├── services/
+│   └── api.ts                  # Centralized typed HTTP API service layer
+├── types/
+│   └── index.ts                # TypeScript data interfaces & API contracts
+├── public/                     # Static assets & brand icons
+├── .env.example                # Safe environment variable template
+├── next.config.ts              # Next.js configuration
+├── tsconfig.json               # TypeScript compiler configuration
+└── package.json                # Project scripts & dependencies
+```
+
+---
+
+## 🚢 Production Deployment (Vercel)
+
+The Voxora frontend is architected for seamless deployment on [Vercel](https://vercel.com):
+
+1. **Connect Repository:** Import your fork of `Voxora` into the Vercel Dashboard.
+2. **Project Settings:**
+   - **Framework Preset:** Next.js
+   - **Root Directory:** `frontend`
+   - **Build Command:** `npm run build`
+   - **Install Command:** `npm install`
+   - **Output Directory:** `.next`
+3. **Environment Variables:**
+   - Set `NEXT_PUBLIC_API_URL` to your production backend URL (e.g. `https://api.yourdomain.com/api`).
+4. **Deploy:** Click **Deploy**.
+
+> **Important Architecture Note:**
+> Vercel hosts the Next.js frontend as a serverless application. The FastAPI backend must be hosted separately (e.g. on Render, Railway, AWS EC2, or a Linux VPS) because it requires Python 3.13, FFmpeg for audio extraction, persistent SQLite / ChromaDB disk storage, and background processing workers.

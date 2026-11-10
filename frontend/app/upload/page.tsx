@@ -9,9 +9,7 @@ import {
   FileVideo,
   Sparkles,
   AlertCircle,
-  CheckCircle2,
-  Clock,
-  ArrowRight
+  CheckCircle2
 } from 'lucide-react';
 import { api } from '@/services/api';
 
@@ -62,8 +60,9 @@ export default function UploadPage() {
       setTimeout(() => {
         router.push(`/lectures/${lecture.id}`);
       }, 1000);
-    } catch (err: any) {
-      setErrorMessage(err.message || 'Failed to process YouTube link.');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to process YouTube link.';
+      setErrorMessage(msg);
       setStatusMessage(null);
     } finally {
       setSubmitting(false);
@@ -84,8 +83,9 @@ export default function UploadPage() {
       setTimeout(() => {
         router.push(`/lectures/${lecture.id}`);
       }, 1000);
-    } catch (err: any) {
-      setErrorMessage(err.message || 'Media upload failed.');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Media upload failed.';
+      setErrorMessage(msg);
       setStatusMessage(null);
     } finally {
       setSubmitting(false);
@@ -96,7 +96,7 @@ export default function UploadPage() {
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-8">
       {/* Title */}
       <div className="text-center">
-        <h1 className="text-3xl font-extrabold text-slate-900">Upload Educational Lecture</h1>
+        <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Upload Educational Lecture</h1>
         <p className="mt-2 text-sm text-slate-500">
           Paste a YouTube lecture link or upload your recorded video or audio file.
         </p>
@@ -106,6 +106,7 @@ export default function UploadPage() {
       <div className="flex justify-center">
         <div className="inline-flex p-1 bg-slate-100 rounded-xl border border-slate-200">
           <button
+            type="button"
             onClick={() => setActiveTab('youtube')}
             className={`flex items-center px-6 py-2.5 rounded-lg text-sm font-semibold transition-all ${
               activeTab === 'youtube'
@@ -117,6 +118,7 @@ export default function UploadPage() {
             YouTube Link
           </button>
           <button
+            type="button"
             onClick={() => setActiveTab('upload')}
             className={`flex items-center px-6 py-2.5 rounded-lg text-sm font-semibold transition-all ${
               activeTab === 'upload'
@@ -171,7 +173,7 @@ export default function UploadPage() {
             <button
               type="submit"
               disabled={submitting}
-              className="w-full flex items-center justify-center py-3.5 px-6 rounded-xl font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 shadow-md transition-colors"
+              className="w-full flex items-center justify-center py-3.5 px-6 rounded-xl font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 shadow-md transition-all hover:shadow-lg"
             >
               {submitting ? (
                 <>
@@ -247,17 +249,17 @@ export default function UploadPage() {
             <button
               type="submit"
               disabled={submitting || !file}
-              className="w-full flex items-center justify-center py-3.5 px-6 rounded-xl font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 shadow-md transition-colors"
+              className="w-full flex items-center justify-center py-3.5 px-6 rounded-xl font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 shadow-md transition-all hover:shadow-lg"
             >
               {submitting ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                  Uploading & Starting Pipeline...
+                  Uploading &amp; Starting Pipeline...
                 </>
               ) : (
                 <>
                   <UploadCloud className="w-4 h-4 mr-2" />
-                  Upload & Transcribe with Gnani Prisma
+                  Upload &amp; Transcribe with Gnani Prisma
                 </>
               )}
             </button>
@@ -285,4 +287,3 @@ export default function UploadPage() {
     </div>
   );
 }
-
