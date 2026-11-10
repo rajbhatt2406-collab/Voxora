@@ -6,11 +6,7 @@ import {
   FilePenLine,
   Download,
   Palette,
-  Type,
-  AlignLeft,
-  Sparkles,
-  CheckCircle2,
-  AlertCircle
+  Sparkles
 } from 'lucide-react';
 import { api } from '@/services/api';
 import { Lecture, Note } from '@/types';
@@ -36,12 +32,10 @@ function HandwrittenNotesContent() {
   );
 
   // Customization controls
-  const [fontStyle, setFontStyle] = useState<string>('Caveat');
   const [fontSize, setFontSize] = useState<number>(14);
   const [inkColor, setInkColor] = useState<string>('#1A365D');
   const [paperStyle, setPaperStyle] = useState<string>('ruled');
   const [lineSpacing, setLineSpacing] = useState<number>(1.5);
-  const [margin, setMargin] = useState<number>(20);
   const [pageBackground, setPageBackground] = useState<string>('ivory');
 
   const [generating, setGenerating] = useState(false);
@@ -50,28 +44,51 @@ function HandwrittenNotesContent() {
 
   // Load lectures
   useEffect(() => {
-    api.getLectures().then((res) => {
-      setLectures(res);
-      if (res.length > 0 && !selectedLectureId) {
-        setSelectedLectureId(res[0].id);
-      }
-    }).catch(console.error);
-  }, []);
+    let ignore = false;
+    api.getLectures()
+      .then((res) => {
+        if (!ignore) {
+          setLectures(res);
+          if (res.length > 0 && !selectedLectureId) {
+            setSelectedLectureId(res[0].id);
+          }
+        }
+      })
+      .catch((err: unknown) => {
+        console.error('Failed to load lectures:', err);
+      });
+    return () => {
+      ignore = true;
+    };
+  }, [selectedLectureId]);
 
   // Load notes for selected lecture
   useEffect(() => {
+    let ignore = false;
     if (selectedLectureId) {
-      api.getMaterials(selectedLectureId).then((res) => {
-        setNotes(res.notes || []);
-        if (res.notes?.length > 0) {
-          const match = initialNoteId ? res.notes.find((n) => n.id === initialNoteId) : res.notes[0];
-          if (match) {
-            setSelectedNoteId(match.id);
-            setContent(match.content);
+      api.getMaterials(selectedLectureId)
+        .then((res) => {
+          if (!ignore) {
+            const lectureNotes = res.notes || [];
+            setNotes(lectureNotes);
+            if (lectureNotes.length > 0) {
+              const match = initialNoteId
+                ? lectureNotes.find((n) => n.id === initialNoteId)
+                : lectureNotes[0];
+              if (match) {
+                setSelectedNoteId(match.id);
+                setContent(match.content);
+              }
+            }
           }
-        }
-      }).catch(console.error);
+        })
+        .catch((err: unknown) => {
+          console.error('Failed to load materials:', err);
+        });
     }
+    return () => {
+      ignore = true;
+    };
   }, [selectedLectureId, initialNoteId]);
 
   const handleSelectNote = (id: string) => {
@@ -84,22 +101,22 @@ function HandwrittenNotesContent() {
     try {
       setGenerating(true);
       setPdfDownloadUrl(null);
-      // If no note exists yet in DB, we use note_id fallback or standard endpoint
       const noteIdToUse = selectedNoteId || 'temp_note';
       const res = await api.generateHandwrittenPdf(noteIdToUse, {
         text: content,
-        font_style: fontStyle,
+        font_style: 'Caveat',
         font_size: fontSize,
         ink_color: inkColor,
         paper_style: paperStyle,
         line_spacing: lineSpacing,
-        margin: margin,
+        margin: 20,
         page_background: pageBackground
       });
       setPdfDownloadUrl(res.pdf_url);
       setPdfFilename(res.filename);
-    } catch (e: any) {
-      alert(e.message || 'PDF Generation failed');
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'PDF Generation failed';
+      alert(msg);
     } finally {
       setGenerating(false);
     }
@@ -110,7 +127,7 @@ function HandwrittenNotesContent() {
       {/* Title */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 flex items-center">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 flex items-center tracking-tight">
             <FilePenLine className="w-7 h-7 text-indigo-600 mr-2.5" />
             Handwritten Notes Studio
           </h1>
@@ -136,7 +153,7 @@ function HandwrittenNotesContent() {
         <div className="lg:col-span-4 space-y-6">
           <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-5">
             <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
-              Lecture & Note Source
+              Lecture &amp; Note Source
             </h3>
 
             <div>
@@ -144,7 +161,8 @@ function HandwrittenNotesContent() {
               <select
                 value={selectedLectureId}
                 onChange={(e) => setSelectedLectureId(e.target.value)}
-                className="w-full text-xs font-medium p-2.5 rounded-xl border border-slate-200 bg-white"
+                aria-label="Select lecture for notes"
+                className="w-full text-xs font-medium p-2.5 rounded-xl border border-slate-200 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
                 {lectures.map((l) => (
                   <option key={l.id} value={l.id}>
@@ -160,7 +178,8 @@ function HandwrittenNotesContent() {
                 <select
                   value={selectedNoteId}
                   onChange={(e) => handleSelectNote(e.target.value)}
-                  className="w-full text-xs font-medium p-2.5 rounded-xl border border-slate-200 bg-white"
+                  aria-label="Select note to edit"
+                  className="w-full text-xs font-medium p-2.5 rounded-xl border border-slate-200 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
                   {notes.map((n) => (
                     <option key={n.id} value={n.id}>
@@ -176,7 +195,7 @@ function HandwrittenNotesContent() {
           <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-5">
             <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center">
               <Palette className="w-4 h-4 mr-1.5 text-indigo-600" />
-              Styling & Aesthetics
+              Styling &amp; Aesthetics
             </h3>
 
             {/* Paper Texture */}
@@ -186,8 +205,9 @@ function HandwrittenNotesContent() {
                 {['ruled', 'grid', 'plain'].map((style) => (
                   <button
                     key={style}
+                    type="button"
                     onClick={() => setPaperStyle(style)}
-                    className={`py-2 text-xs font-semibold rounded-lg capitalize border ${
+                    className={`py-2 text-xs font-semibold rounded-lg capitalize border cursor-pointer transition-colors ${
                       paperStyle === style
                         ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
                         : 'border-slate-200 text-slate-600 hover:bg-slate-50'
@@ -211,8 +231,9 @@ function HandwrittenNotesContent() {
                 ].map((bg) => (
                   <button
                     key={bg.id}
+                    type="button"
                     onClick={() => setPageBackground(bg.id)}
-                    className={`flex items-center p-2 rounded-lg border ${
+                    className={`flex items-center p-2 rounded-lg border cursor-pointer transition-all ${
                       pageBackground === bg.id
                         ? 'border-indigo-600 ring-1 ring-indigo-500'
                         : 'border-slate-200'
@@ -237,9 +258,11 @@ function HandwrittenNotesContent() {
                 ].map((c) => (
                   <button
                     key={c.hex}
+                    type="button"
                     onClick={() => setInkColor(c.hex)}
                     title={c.name}
-                    className={`w-8 h-8 rounded-full border-2 transition-transform ${
+                    aria-label={`Select ink color ${c.name}`}
+                    className={`w-8 h-8 rounded-full border-2 transition-transform cursor-pointer ${
                       inkColor === c.hex ? 'scale-110 border-indigo-600' : 'border-transparent'
                     }`}
                     style={{ backgroundColor: c.hex }}
@@ -261,6 +284,7 @@ function HandwrittenNotesContent() {
                   max="20"
                   value={fontSize}
                   onChange={(e) => setFontSize(Number(e.target.value))}
+                  aria-label="Font size in points"
                   className="w-full accent-indigo-600"
                 />
               </div>
@@ -277,6 +301,7 @@ function HandwrittenNotesContent() {
                   step="0.1"
                   value={lineSpacing}
                   onChange={(e) => setLineSpacing(Number(e.target.value))}
+                  aria-label="Line spacing multiplier"
                   className="w-full accent-indigo-600"
                 />
               </div>
@@ -285,7 +310,7 @@ function HandwrittenNotesContent() {
             <button
               onClick={handleGeneratePDF}
               disabled={generating}
-              className="w-full py-3.5 rounded-xl font-bold text-sm text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 shadow-md transition-colors flex items-center justify-center"
+              className="w-full py-3.5 rounded-xl font-bold text-sm text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 shadow-md transition-all hover:shadow-lg flex items-center justify-center cursor-pointer"
             >
               {generating ? (
                 <>
@@ -311,6 +336,7 @@ function HandwrittenNotesContent() {
               rows={8}
               value={content}
               onChange={(e) => setContent(e.target.value)}
+              aria-label="Notes content markdown editor"
               className="w-full p-4 rounded-xl border border-slate-200 font-mono text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800"
             />
           </div>
@@ -380,4 +406,3 @@ export default function HandwrittenNotesPage() {
     </Suspense>
   );
 }
-

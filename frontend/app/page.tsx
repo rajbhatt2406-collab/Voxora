@@ -9,9 +9,7 @@ import {
   Languages,
   CheckCircle2,
   Sparkles,
-  PlayCircle,
-  FileCheck2,
-  Layers
+  PlayCircle
 } from 'lucide-react';
 
 export default function LandingPage() {

@@ -5,7 +5,6 @@ import {
   Settings as SettingsIcon,
   Globe,
   Sliders,
-  Database,
   Cpu,
   CheckCircle2
 } from 'lucide-react';
@@ -25,9 +24,9 @@ export default function SettingsPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
       <div>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 flex items-center">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 flex items-center tracking-tight">
           <SettingsIcon className="w-7 h-7 text-indigo-600 mr-2.5" />
-          Settings & Preferences
+          Settings &amp; Preferences
         </h1>
         <p className="text-sm text-slate-500 mt-1">
           Customize your default transcription, notes styles, and AI learning targets.
@@ -39,7 +38,7 @@ export default function SettingsPage() {
         <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
           <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center">
             <Globe className="w-4 h-4 mr-2 text-indigo-600" />
-            Language & Multilingual Settings
+            Language &amp; Multilingual Settings
           </h3>
 
           <div>
@@ -49,7 +48,8 @@ export default function SettingsPage() {
             <select
               value={defaultLanguage}
               onChange={(e) => setDefaultLanguage(e.target.value)}
-              className="w-full max-w-sm text-xs font-semibold p-2.5 rounded-xl border border-slate-200 bg-white"
+              aria-label="Default lecture language"
+              className="w-full max-w-sm text-xs font-semibold p-2.5 rounded-xl border border-slate-200 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
               <option value="en">English (US / UK / Global)</option>
               <option value="hi">Hindi (हिंदी)</option>
@@ -79,7 +79,8 @@ export default function SettingsPage() {
               <select
                 value={defaultPaperStyle}
                 onChange={(e) => setDefaultPaperStyle(e.target.value)}
-                className="w-full text-xs font-semibold p-2.5 rounded-xl border border-slate-200 bg-white capitalize"
+                aria-label="Default handwritten paper style"
+                className="w-full text-xs font-semibold p-2.5 rounded-xl border border-slate-200 bg-white text-slate-800 capitalize focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
                 <option value="ruled">Ruled Paper</option>
                 <option value="grid">Grid Graph Paper</option>
@@ -94,7 +95,8 @@ export default function SettingsPage() {
               <select
                 value={dailyTargetHours}
                 onChange={(e) => setDailyTargetHours(e.target.value)}
-                className="w-full text-xs font-semibold p-2.5 rounded-xl border border-slate-200 bg-white"
+                aria-label="Target daily study duration"
+                className="w-full text-xs font-semibold p-2.5 rounded-xl border border-slate-200 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
                 <option value="1.0">1.0 Hour / Day</option>
                 <option value="1.5">1.5 Hours / Day (Optimal)</option>
@@ -135,7 +137,7 @@ export default function SettingsPage() {
         <div className="flex items-center gap-4">
           <button
             type="submit"
-            className="px-6 py-3 rounded-xl font-bold text-sm text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm transition-colors"
+            className="px-6 py-3 rounded-xl font-bold text-sm text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm transition-all hover:shadow cursor-pointer"
           >
             Save Preferences
           </button>
@@ -150,4 +152,3 @@ export default function SettingsPage() {
     </div>
   );
 }
-

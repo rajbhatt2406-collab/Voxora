@@ -5,12 +5,10 @@ import {
   Bot,
   Send,
   Clock,
-  BookOpen,
-  Sparkles,
-  HelpCircle
+  Sparkles
 } from 'lucide-react';
 import { api } from '@/services/api';
-import { Lecture } from '@/types';
+import { Lecture, CitationSource } from '@/types';
 
 export default function AssistantPage() {
   const [lectures, setLectures] = useState<Lecture[]>([]);
@@ -18,16 +16,27 @@ export default function AssistantPage() {
   const [query, setQuery] = useState('');
   const [asking, setAsking] = useState(false);
   const [messages, setMessages] = useState<
-    Array<{ role: 'user' | 'assistant'; text: string; sources?: any[] }>
+    Array<{ role: 'user' | 'assistant'; text: string; sources?: CitationSource[] }>
   >([]);
 
   useEffect(() => {
-    api.getLectures().then((res) => {
-      setLectures(res);
-      if (res.length > 0) {
-        setSelectedLectureId(res[0].id);
-      }
-    }).catch(console.error);
+    let ignore = false;
+    api.getLectures()
+      .then((res) => {
+        if (!ignore) {
+          setLectures(res);
+          if (res.length > 0) {
+            setSelectedLectureId(res[0].id);
+          }
+        }
+      })
+      .catch((err: unknown) => {
+        console.error('Failed to load lectures:', err);
+      });
+
+    return () => {
+      ignore = true;
+    };
   }, []);
 
   const handleAsk = async (e: React.FormEvent) => {
@@ -45,10 +54,11 @@ export default function AssistantPage() {
         ...prev,
         { role: 'assistant', text: res.answer, sources: res.sources }
       ]);
-    } catch (e: any) {
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to query assistant.';
       setMessages((prev) => [
         ...prev,
-        { role: 'assistant', text: `Error: ${e.message || 'Failed to query assistant.'}` }
+        { role: 'assistant', text: `Error: ${msg}` }
       ]);
     } finally {
       setAsking(false);
@@ -77,7 +87,8 @@ export default function AssistantPage() {
               setSelectedLectureId(e.target.value);
               setMessages([]);
             }}
-            className="w-full text-xs font-medium p-2.5 rounded-xl border border-slate-200 bg-white"
+            aria-label="Select target lecture"
+            className="w-full text-xs font-medium p-2.5 rounded-xl border border-slate-200 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
           >
             {lectures.map((l) => (
               <option key={l.id} value={l.id}>
@@ -110,7 +121,7 @@ export default function AssistantPage() {
                 <div
                   className={`max-w-[80%] rounded-2xl px-5 py-3.5 text-sm leading-relaxed ${
                     m.role === 'user'
-                      ? 'bg-indigo-600 text-white rounded-br-none shadow-sm'
+                      ? 'bg-indigo-600 text-white rounded-br-none shadow-xs'
                       : 'bg-slate-100 text-slate-800 rounded-bl-none'
                   }`}
                 >
@@ -126,7 +137,7 @@ export default function AssistantPage() {
                         <div
                           key={sIdx}
                           title={src.text}
-                          className="flex items-center text-[11px] font-mono bg-indigo-50 border border-indigo-200 text-indigo-700 px-2 py-0.5 rounded cursor-help"
+                          className="flex items-center text-[11px] font-mono bg-indigo-50 border border-indigo-200 text-indigo-700 px-2 py-0.5 rounded-md cursor-help"
                         >
                           <Clock className="w-3 h-3 mr-1" />
                           [{String(mStart).padStart(2, '0')}:{String(sStart).padStart(2, '0')}]
@@ -140,8 +151,8 @@ export default function AssistantPage() {
           )}
 
           {asking && (
-            <div className="flex items-center text-xs text-indigo-600 space-x-2">
-              <div className="w-3 h-3 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+            <div className="flex items-center text-xs text-indigo-600 space-x-2 p-2">
+              <div className="w-3.5 h-3.5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
               <span>Searching ChromaDB vector store and generating verified answer...</span>
             </div>
           )}
@@ -160,14 +171,13 @@ export default function AssistantPage() {
           <button
             type="submit"
             disabled={asking || !query.trim() || !selectedLectureId}
-            className="px-6 py-3 rounded-xl font-bold text-sm text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 transition-colors flex items-center"
+            className="px-6 py-3 rounded-xl font-bold text-sm text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 transition-colors flex items-center shadow-xs"
           >
             <Send className="w-4 h-4 mr-1.5" />
-            Ask
+            <span>Ask</span>
           </button>
         </form>
       </div>
     </div>
   );
 }
-

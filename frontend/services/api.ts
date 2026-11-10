@@ -1,13 +1,15 @@
 import {
   Lecture,
   Transcript,
+  TranscriptSegment,
   Note,
   Summary,
   Question,
   Quiz,
   QuizSubmitResult,
   LearningPlan,
-  AskQuestionResponse
+  AskQuestionResponse,
+  HandwrittenPdfOptions
 } from '@/types';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
@@ -34,7 +36,7 @@ export const api = {
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || 'Failed to submit YouTube video');
+      throw new Error((err as { detail?: string }).detail || 'Failed to submit YouTube video');
     }
     return res.json();
   },
@@ -51,7 +53,7 @@ export const api = {
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || 'Media upload failed');
+      throw new Error((err as { detail?: string }).detail || 'Media upload failed');
     }
     return res.json();
   },
@@ -68,7 +70,10 @@ export const api = {
     return res.json();
   },
 
-  async translateTranscript(lectureId: string, targetLanguage: string): Promise<any> {
+  async translateTranscript(
+    lectureId: string,
+    targetLanguage: string
+  ): Promise<{ segments: TranscriptSegment[]; target_language?: string; text?: string }> {
     const res = await fetch(`${API_BASE}/lectures/${lectureId}/translate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -79,7 +84,12 @@ export const api = {
   },
 
   // Study Materials
-  async getMaterials(lectureId: string): Promise<{ notes: Note[]; summaries: Summary[]; questions: Question[]; quizzes: Quiz[] }> {
+  async getMaterials(lectureId: string): Promise<{
+    notes: Note[];
+    summaries: Summary[];
+    questions: Question[];
+    quizzes: Quiz[];
+  }> {
     const res = await fetch(`${API_BASE}/lectures/${lectureId}/materials`);
     if (!res.ok) throw new Error('Failed to fetch materials');
     return res.json();
@@ -93,7 +103,7 @@ export const api = {
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || 'Failed to generate notes');
+      throw new Error((err as { detail?: string }).detail || 'Failed to generate notes');
     }
     return res.json();
   },
@@ -104,7 +114,7 @@ export const api = {
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || 'Failed to generate summary');
+      throw new Error((err as { detail?: string }).detail || 'Failed to generate summary');
     }
     return res.json();
   },
@@ -115,7 +125,7 @@ export const api = {
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || 'Failed to generate questions');
+      throw new Error((err as { detail?: string }).detail || 'Failed to generate questions');
     }
     return res.json();
   },
@@ -128,7 +138,7 @@ export const api = {
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || 'Failed to generate quiz');
+      throw new Error((err as { detail?: string }).detail || 'Failed to generate quiz');
     }
     return res.json();
   },
@@ -144,7 +154,10 @@ export const api = {
   },
 
   // Handwritten PDF
-  async generateHandwrittenPdf(noteId: string, options: any): Promise<{ pdf_url: string; filename: string }> {
+  async generateHandwrittenPdf(
+    noteId: string,
+    options: HandwrittenPdfOptions
+  ): Promise<{ pdf_url: string; filename: string }> {
     const res = await fetch(`${API_BASE}/notes/${noteId}/generate-pdf`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -169,7 +182,7 @@ export const api = {
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || 'Failed to create learning plan');
+      throw new Error((err as { detail?: string }).detail || 'Failed to create learning plan');
     }
     return res.json();
   },
@@ -191,9 +204,8 @@ export const api = {
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || 'Assistant query failed');
+      throw new Error((err as { detail?: string }).detail || 'Assistant query failed');
     }
     return res.json();
   }
 };
-
